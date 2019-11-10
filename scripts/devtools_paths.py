@@ -45,11 +45,12 @@ def node_path():
     return node.GetBinaryPath()
 
 
-DEVTOOLS_ROOT_PATH = path.join(path.dirname(__file__), '..')
+def devtools_root_path():
+    return path.dirname((path.dirname(path.abspath(__file__))))
 
 
 def node_modules_path():
-    return path.join(DEVTOOLS_ROOT_PATH, 'node_modules')
+    return path.join(devtools_root_path(), 'node_modules')
 
 
 def eslint_path():
@@ -60,5 +61,15 @@ def karma_path():
     return path.join(node_modules_path(), 'karma', 'bin', 'karma')
 
 
+def rollup_path():
+    return path.join(
+        node_modules_path(),
+        'rollup',
+        'dist',
+        'bin',
+        'rollup',
+    )
+
+
 def package_json_path():
-    return path.join(DEVTOOLS_ROOT_PATH, 'package.json')
+    return path.join(devtools_root_path(), 'package.json')

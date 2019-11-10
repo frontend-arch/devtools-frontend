@@ -14,7 +14,7 @@ Coverage.CoverageSegment;
 Coverage.CoverageType = {
   CSS: (1 << 0),
   JavaScript: (1 << 1),
-  JavaScriptCoarse: (1 << 2),
+  JavaScriptPerFunction: (1 << 2),
 };
 
 /** @enum {symbol} */
@@ -38,8 +38,6 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
     this._coverageByURL = new Map();
     /** @type {!Map<!Common.ContentProvider, !Coverage.CoverageInfo>} */
     this._coverageByContentProvider = new Map();
-    /** @type {?Promise<!Array<!Protocol.Profiler.ScriptCoverage>>} */
-    this._bestEffortCoveragePromise = null;
 
     /** @type {!Coverage.SuspensionState} */
     this._suspensionState = Coverage.SuspensionState.Active;
@@ -58,9 +56,10 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
   }
 
   /**
+   * @param {boolean} jsCoveragePerBlock - Collect per Block coverage if `true`, per function coverage otherwise.
    * @return {!Promise<boolean>}
    */
-  async start() {
+  async start(jsCoveragePerBlock) {
     if (this._suspensionState !== Coverage.SuspensionState.Active) {
       throw Error('Cannot start CoverageModel while it is not active.');
     }
@@ -69,12 +68,14 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
       // Note there's no JS coverage since JS won't ever return
       // coverage twice, even after it's restarted.
       this._clearCSS();
+
+      this._cssModel.addEventListener(SDK.CSSModel.Events.StyleSheetAdded, this._handleStyleSheetAdded, this);
       promises.push(this._cssModel.startCoverage());
     }
     if (this._cpuProfilerModel) {
-      this._bestEffortCoveragePromise = this._cpuProfilerModel.bestEffortCoverage();
-      promises.push(this._cpuProfilerModel.startPreciseCoverage());
+      promises.push(this._cpuProfilerModel.startPreciseCoverage(jsCoveragePerBlock));
     }
+
     await Promise.all(promises);
     return !!(this._cssModel || this._cpuProfilerModel);
   }
@@ -90,6 +91,7 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
     }
     if (this._cssModel) {
       promises.push(this._cssModel.stopCoverage());
+      this._cssModel.removeEventListener(SDK.CSSModel.Events.StyleSheetAdded, this._handleStyleSheetAdded, this);
     }
     await Promise.all(promises);
   }
@@ -244,6 +246,10 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
         this._coverageByURL.delete(entry.url());
       }
     }
+
+    for (const styleSheetHeader of this._cssModel.getAllStyleSheetHeaders()) {
+      this._addStyleSheetToCSSCoverage(styleSheetHeader);
+    }
   }
 
   /**
@@ -262,12 +268,7 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
       return [];
     }
     const now = Date.now();
-    let freshRawCoverageData = await this._cpuProfilerModel.takePreciseCoverage();
-    if (this._bestEffortCoveragePromise) {
-      const bestEffortCoverage = await this._bestEffortCoveragePromise;
-      this._bestEffortCoveragePromise = null;
-      freshRawCoverageData = bestEffortCoverage.concat(freshRawCoverageData);
-    }
+    const freshRawCoverageData = await this._cpuProfilerModel.takePreciseCoverage();
     if (this._suspensionState !== Coverage.SuspensionState.Active) {
       if (freshRawCoverageData.length > 0) {
         this._jsBacklog.push({rawCoverageData: freshRawCoverageData, stamp: now});
@@ -307,7 +308,7 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
         // coverage is not available. Also, ignore non-block level functions that weren't
         // ever called.
         if (func.isBlockCoverage === false && !(func.ranges.length === 1 && !func.ranges[0].count)) {
-          type |= Coverage.CoverageType.JavaScriptCoarse;
+          type |= Coverage.CoverageType.JavaScriptPerFunction;
         }
         for (const range of func.ranges) {
           ranges.push(range);
@@ -321,6 +322,12 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
       }
     }
     return updatedEntries;
+  }
+
+  _handleStyleSheetAdded(event) {
+    const styleSheetHeader = /** @type {!SDK.CSSStyleSheetHeader} */ (event.data);
+
+    this._addStyleSheetToCSSCoverage(styleSheetHeader);
   }
 
   /**
@@ -428,6 +435,15 @@ Coverage.CoverageModel = class extends SDK.SDKModel {
     }
 
     return result;
+  }
+
+  /**
+   * @param {!SDK.CSSStyleSheetHeader} styleSheetHeader
+   */
+  _addStyleSheetToCSSCoverage(styleSheetHeader) {
+    this._addCoverage(
+        styleSheetHeader, styleSheetHeader.contentLength, styleSheetHeader.startLine, styleSheetHeader.startColumn, [],
+        Coverage.CoverageType.CSS, Date.now());
   }
 
   /**

@@ -12,9 +12,6 @@
   <message name="IDS_DEVTOOLS_03bfaee27b3b5cfb28deef84a0f416e5" desc="Title of the sources threads">
     Threads
   </message>
-  <message name="IDS_DEVTOOLS_03c2e7e41ffc181a4e84080b4710e81e" desc="A context menu item in the Sources Navigator of the Sources panel">
-    New
-  </message>
   <message name="IDS_DEVTOOLS_05184fe2fb6c76214bc56796837f1c9b" desc="Title of an action in the debugger tool to next call frame">
     Next call frame
   </message>
@@ -396,8 +393,8 @@
   <message name="IDS_DEVTOOLS_c081841ffd8efaef2ee0c7bf0507758a" desc="Title of a setting under the Sources category that can be invoked through the Command Menu">
     Enable bracket matching
   </message>
-  <message name="IDS_DEVTOOLS_c12de9f9edb401ca79a3291f1831ae6f" desc="Title in Scope Chain Sidebar Pane of the Sources panel">
-    Closure (<ph name="UI_BEAUTIFYFUNCTIONNAME_SCOPENAME_">$1s<ex>Scope.funtionName</ex></ph>)
+  <message name="IDS_DEVTOOLS_c12de9f9edb401ca79a3291f1831ae6f" desc="Text in the Sources panel Scope pane describing a closure scope.">
+    Closure (<ph name="UI_BEAUTIFYFUNCTIONNAME_SCOPENAME_">$1s<ex>func</ex></ph>)
   </message>
   <message name="IDS_DEVTOOLS_c2e59ab4f410655458110ae524bdc9be" desc="Text of a DOM element in Debugger Plugin of the Sources panel">
     Go to &quot;<ph name="COMMON_UISTRING__BLACKBOXING__">$1s<ex>Blackboxing</ex></ph>&quot; tab in settings

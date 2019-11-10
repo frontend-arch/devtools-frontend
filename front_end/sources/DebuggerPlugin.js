@@ -293,7 +293,8 @@ Sources.DebuggerPlugin = class extends Sources.UISourceCodeFrame.Plugin {
      * @param {!Bindings.ResourceScriptFile} scriptFile
      */
     function addSourceMapURL(scriptFile) {
-      Sources.AddSourceMapURLDialog.show(addSourceMapURLDialogCallback.bind(null, scriptFile));
+      const dialog = new Sources.AddSourceMapURLDialog(addSourceMapURLDialogCallback.bind(null, scriptFile));
+      dialog.show();
     }
 
     /**
@@ -1565,7 +1566,7 @@ Sources.DebuggerPlugin = class extends Sources.UISourceCodeFrame.Plugin {
   }
 
   _detectMinified() {
-    const {content} = this._uiSourceCode.content();
+    const content = this._uiSourceCode.content();
     if (!content || !TextUtils.isMinified(content)) {
       return;
     }

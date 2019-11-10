@@ -12,20 +12,17 @@ module.exports = function(config) {
   const options = {
     basePath: '',
 
-    files: [{
-      pattern: 'front_end/**/*.js',
-      included: false,
-      served: true
-    },{
-      pattern: 'test/unittests/**/*.ts',
-      type: 'module'
-    }],
+    files: [
+      {pattern: 'front_end/**/*.js', included: false, served: true}, {pattern: 'test/unittests/**/*.ts', type: 'module'}
+    ],
 
     reporters: ['dots', 'coverage-istanbul'],
 
     preprocessors: {
       './test/unittests/**/*.ts': ['karma-typescript'],
-      './front_end/common/*.js': ['karma-coverage-istanbul-instrumenter']
+      './front_end/common/*.js': ['karma-coverage-istanbul-instrumenter'],
+      './front_end/workspace/*.js': ['karma-coverage-istanbul-instrumenter'],
+      './front_end/ui/*.js': ['karma-coverage-istanbul-instrumenter']
     },
 
     browsers: ['ChromeHeadless'],
@@ -36,19 +33,12 @@ module.exports = function(config) {
       compilerOptions: {
         target: 'esnext',
         module: 'esnext',
-        typeRoots: external_devtools_frontend ? undefined : [node_modules_path + '@types']
+        typeRoots: external_devtools_frontend ? undefined : [node_modules_path + '@types'],
+        lib: ['esnext', 'dom']
       },
-      coverageOptions: {
-        instrumentation: false
-      },
-      bundlerOptions: {
-        resolve: {
-          directories: [node_modules_path]
-        }
-      },
-      exclude: [
-        'scripts'
-      ]
+      coverageOptions: {instrumentation: false},
+      bundlerOptions: {resolve: {directories: [node_modules_path]}},
+      exclude: ['scripts']
     },
 
     proxies: {
@@ -56,22 +46,14 @@ module.exports = function(config) {
     },
 
     plugins: [
-      'karma-chrome-launcher',
-      'karma-mocha',
-      'karma-chai',
-      'karma-typescript',
+      'karma-chrome-launcher', 'karma-mocha', 'karma-chai', 'karma-typescript',
       require(node_modules_path + 'karma-coverage-istanbul-instrumenter'),
       require(node_modules_path + 'karma-coverage-istanbul-reporter')
     ],
 
-    coverageIstanbulInstrumenter: {
-      esModules: true
-    },
+    coverageIstanbulInstrumenter: {esModules: true},
 
-    coverageIstanbulReporter: {
-      reports: ['text', 'html'],
-      dir: 'karma-coverage'
-    },
+    coverageIstanbulReporter: {reports: ['text', 'html'], dir: 'karma-coverage'},
 
     singleRun: true
   };

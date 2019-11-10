@@ -43,6 +43,7 @@ Network.NetworkLogView = class extends UI.VBox {
     this.registerRequiredCSS('network/networkLogView.css');
 
     this.element.id = 'network-container';
+    this.element.classList.add('no-node-selected');
 
     this._networkHideDataURLSetting = Common.settings.createSetting('networkHideDataURL', false);
     this._networkResourceTypeFiltersSetting = Common.settings.createSetting('networkResourceTypeFilters', {});
@@ -95,7 +96,6 @@ Network.NetworkLogView = class extends UI.VBox {
     this._highlightedNode = null;
 
     this.linkifier = new Components.Linkifier();
-    this.badgePool = new ProductRegistry.BadgePool();
 
     this._recording = false;
     this._needsRefresh = false;
@@ -585,10 +585,8 @@ Network.NetworkLogView = class extends UI.VBox {
     this._filterRequests();
   }
 
-  clearSelection() {
-    if (this._dataGrid.selectedNode) {
-      this._dataGrid.selectedNode.deselect();
-    }
+  resetFocus() {
+    this._dataGrid.element.focus();
   }
 
   _resetSuggestionBuilder() {
@@ -649,13 +647,24 @@ Network.NetworkLogView = class extends UI.VBox {
     hintText.appendChild(UI.XLink.create(
         'https://developers.google.com/web/tools/chrome-devtools/network/?utm_source=devtools&utm_campaign=2019Q1',
         'Learn more'));
+
+    this._setHidden(true);
   }
 
   _hideRecordingHint() {
+    this._setHidden(false);
     if (this._recordingHint) {
       this._recordingHint.remove();
     }
     this._recordingHint = null;
+  }
+
+  /**
+   * @param {boolean} value
+   */
+  _setHidden(value) {
+    this._columns.setHidden(value);
+    UI.ARIAUtils.setHidden(this._summaryToolbar.element, value);
   }
 
   /**
@@ -688,6 +697,14 @@ Network.NetworkLogView = class extends UI.VBox {
     this._dataGrid.element.addEventListener('mousedown', this._dataGridMouseDown.bind(this), true);
     this._dataGrid.element.addEventListener('mousemove', this._dataGridMouseMove.bind(this), true);
     this._dataGrid.element.addEventListener('mouseleave', () => this._setHoveredNode(null), true);
+    this._dataGrid.element.addEventListener('keydown', event => {
+      if (isEnterOrSpaceKey(event)) {
+        this.dispatchEventToListeners(Network.NetworkLogView.Events.RequestActivated, /* showPanel */ true);
+        event.consume(true);
+      }
+    });
+    this._dataGrid.element.addEventListener('focus', this.updateNodeBackground.bind(this), true);
+    this._dataGrid.element.addEventListener('blur', this.updateNodeBackground.bind(this), true);
     return this._dataGrid;
   }
 
@@ -965,6 +982,23 @@ Network.NetworkLogView = class extends UI.VBox {
     return this._dataGrid.rootNode().flatChildren();
   }
 
+  updateNodeBackground() {
+    if (this._dataGrid.selectedNode) {
+      this._dataGrid.selectedNode.updateBackgroundColor();
+    }
+  }
+
+  /**
+   * @param {boolean} isSelected
+   */
+  updateNodeSelectedClass(isSelected) {
+    if (isSelected) {
+      this.element.classList.remove('no-node-selected');
+    } else {
+      this.element.classList.add('no-node-selected');
+    }
+  }
+
   stylesChanged() {
     this._columns.scheduleRefresh();
   }
@@ -1081,7 +1115,7 @@ Network.NetworkLogView = class extends UI.VBox {
   }
 
   _reset() {
-    this.dispatchEventToListeners(Network.NetworkLogView.Events.RequestSelected, null);
+    this.dispatchEventToListeners(Network.NetworkLogView.Events.RequestActivated, /* showPanel */ true);
 
     this._setHoveredNode(null);
     this._columns.reset();
@@ -1091,7 +1125,6 @@ Network.NetworkLogView = class extends UI.VBox {
 
     this._timeCalculator.setWindow(null);
     this.linkifier.reset();
-    this.badgePool.reset();
 
     if (this._activeGroupLookup) {
       this._activeGroupLookup.reset();
@@ -1943,7 +1976,8 @@ Network.NetworkLogView.HTTPSchemas = {
 
 /** @enum {symbol} */
 Network.NetworkLogView.Events = {
-  RequestSelected: Symbol('RequestSelected')
+  RequestSelected: Symbol('RequestSelected'),
+  RequestActivated: Symbol('RequestActivated')
 };
 
 /** @enum {string} */

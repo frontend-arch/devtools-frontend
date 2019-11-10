@@ -4,26 +4,26 @@
 
 vars = {
   'build_url': 'https://chromium.googlesource.com/chromium/src/build.git',
-  'build_revision': '0cb62099e91e4056944932f52cf732dab1c5b41f',
+  'build_revision': '61ec5dc258b9fbc17504d1276e0c3eaf4656e372',
 
   'buildtools_url': 'https://chromium.googlesource.com/chromium/src/buildtools.git',
-  'buildtools_revision': 'cf454b247c611167388742c7a31ef138a6031172',
+  'buildtools_revision': '140e4d7c45ffb55ce5dc4d11a0c3938363cd8257',
 
   'depot_tools_url': 'https://chromium.googlesource.com/chromium/tools/depot_tools',
-  'depot_tools_revision': 'be83c310e3d5601c400d856a9963d1f413183d42',
+  'depot_tools_revision': '512f92b73181c8e1d99d38cd9b73fbf41151636a',
 
   'inspector_protocol_url': 'https://chromium.googlesource.com/deps/inspector_protocol',
-  'inspector_protocol_revision': 'a14dad30f0e5b0fc05911856d5a20b1ffe89fd9b',
+  'inspector_protocol_revision': 'd2fc9b958e1eeb1e956f3e2208afa9923bdc9b67',
 
   'clang_format_url': 'https://chromium.googlesource.com/chromium/llvm-project/cfe/tools/clang-format.git',
-  'clang_format_revision': '96636aa0e9f047f17447f2d45a094d0b59ed7917',
+  'clang_format_revision': 'bb994c6f067340c1135eb43eed84f4b33cfa7397',
 
   # GN CIPD package version.
   'gn_version': 'git_revision:ad9e442d92dcd9ee73a557428cfc336b55cbd533',
 
   # Chromium build number for unit tests. It should be regularly updated to
   # the content of https://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/LAST_CHANGE
-  'chromium_build': '705006',
+  'chromium_build': '709754',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -31,13 +31,13 @@ vars = {
 allowed_hosts = [ 'chromium.googlesource.com' ]
 
 deps = {
-  'buildtools/clang_format/script':
+  'devtools-frontend/buildtools/clang_format/script':
     Var('clang_format_url') + '@' + Var('clang_format_revision'),
 
-  'buildtools':
+  'devtools-frontend/buildtools':
     Var('buildtools_url') + '@' + Var('buildtools_revision'),
 
-  'buildtools/linux64': {
+  'devtools-frontend/buildtools/linux64': {
     'packages': [
       {
         'package': 'gn/gn/linux-amd64',
@@ -47,7 +47,7 @@ deps = {
     'dep_type': 'cipd',
     'condition': 'host_os == "linux"',
   },
-  'buildtools/mac': {
+  'devtools-frontend/buildtools/mac': {
     'packages': [
       {
         'package': 'gn/gn/mac-amd64',
@@ -57,7 +57,7 @@ deps = {
     'dep_type': 'cipd',
     'condition': 'host_os == "mac"',
   },
-  'buildtools/win': {
+  'devtools-frontend/buildtools/win': {
     'packages': [
       {
         'package': 'gn/gn/windows-amd64',
@@ -147,7 +147,7 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/win/clang-format.exe.sha1',
+                '-s', 'devtools-frontend/buildtools/win/clang-format.exe.sha1',
     ],
   },
   {
@@ -159,7 +159,7 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/mac/clang-format.sha1',
+                '-s', 'devtools-frontend/buildtools/mac/clang-format.sha1',
     ],
   },
   {
@@ -171,7 +171,7 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/linux64/clang-format.sha1',
+                '-s', 'devtools-frontend/buildtools/linux64/clang-format.sha1',
     ],
   },
 
@@ -181,7 +181,7 @@ hooks = [
     'pattern': '.',
     'condition': 'host_os == "linux"',
     'action': [ 'python',
-                'devtools-frontend/scripts/download_chromium.py',
+                'devtools-frontend/scripts/deps/download_chromium.py',
                 'https://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/' + Var('chromium_build') + '/chrome-linux.zip',
                 'devtools-frontend/third_party/chrome',
                 'chrome-linux/chrome',
